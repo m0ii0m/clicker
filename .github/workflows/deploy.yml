@@ -70,6 +70,8 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/clicker-frontend:latest
+          build-args: |
+            VITE_SECRET_SALT=${{ secrets.VITE_SECRET_SALT }}
 
   deploy:
     name: "Deploy to Production"

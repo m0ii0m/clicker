@@ -12,7 +12,10 @@ services:
   frontend:
     image: clicker-frontend:latest
     container_name: clicker-frontend
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_SECRET_SALT: ${VITE_SECRET_SALT:-pixel_city_sauvegarde_secrete_local}
     ports:
       - "8080:80"
     depends_on:

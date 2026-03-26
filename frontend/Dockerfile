@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+ARG VITE_SECRET_SALT
+ENV VITE_SECRET_SALT=$VITE_SECRET_SALT
 RUN npm run build
 
 # Étape de production (Nginx)

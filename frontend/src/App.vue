@@ -9,11 +9,11 @@ import IsoScene from './components/IsoScene.vue'
 // Composables
 const { userId, copyDebugId } = useApi()
 const {
-  population, growthRate, cityRank, upgradesList,
+  population, growthRate, cityRank, upgradesList, upgradeCounts,
   buildHouse, buyUpgrade, resetGame, loadGame, saveGame
 } = useGameState()
-const { grid } = useCityVisuals(population)
-const { exportSave, importSave } = useSaveManager(population, growthRate, {}, saveGame)
+const { grid } = useCityVisuals(upgradeCounts)
+const { exportSave, importSave } = useSaveManager(population, growthRate, upgradeCounts, saveGame)
 </script>
 
 <template>

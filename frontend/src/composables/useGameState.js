@@ -113,6 +113,7 @@ export function useGameState() {
     growthRate,
     cityRank,
     upgradesList,
+    upgradeCounts,
     buildHouse,
     buyUpgrade,
     resetGame,
