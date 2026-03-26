@@ -82,9 +82,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Update and Restart
+      - name: Update & Restart
         run: |
           cd /opt/hosting/clicker
           docker-compose pull
-          docker-compose up -d --remove-orphans
+          docker-compose up -d --force-recreate --remove-orphans
           docker image prune -f

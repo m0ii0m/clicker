@@ -97,6 +97,53 @@ function useGameState() {
     }
   }
 
+  const exportSave = () => {
+    console.log("Export appelé")
+    const saveData = {
+      trombones: population.value,
+      production_rate: growthRate.value,
+      userId: userId.value,
+      exportDate: new Date().toISOString()
+    }
+    const json = JSON.stringify(saveData, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'pixel_city_save.json'
+    a.style.display = 'none'
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => {
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 100)
+  }
+
+  const importSave = (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        const data = JSON.parse(e.target.result)
+        if (data.trombones === undefined || data.production_rate === undefined) {
+          alert('Fichier de sauvegarde invalide.')
+          return
+        }
+        population.value = data.trombones
+        growthRate.value = data.production_rate
+        buildingCost.value = Math.floor(50 * Math.pow(1.5, growthRate.value))
+        await saveGame()
+        alert('Sauvegarde importée avec succès !')
+      } catch (err) {
+        alert('Erreur lors de la lecture du fichier.')
+      }
+    }
+    reader.readAsText(file)
+    event.target.value = ''
+  }
+
   onMounted(() => {
     loadGame()
     setInterval(() => {
@@ -113,9 +160,11 @@ function useGameState() {
     buildHouse,
     zoneDistrict,
     resetGame,
-    loadGame, // Exporté pour le bouton Refresh
+    loadGame,
     userId,
-    copyDebugId
+    copyDebugId,
+    exportSave,
+    importSave
   }
 }
 
@@ -206,7 +255,7 @@ function useCityVisuals(population) {
 // ==========================================
 // 3. SETUP PRINCIPAL
 // ==========================================
-const { population, growthRate, buildingCost, cityRank, buildHouse, zoneDistrict, resetGame, loadGame, userId, copyDebugId } = useGameState()
+const { population, growthRate, buildingCost, cityRank, buildHouse, zoneDistrict, resetGame, loadGame, userId, copyDebugId, exportSave, importSave } = useGameState()
 const { grid } = useCityVisuals(population)
 
 const handleImgError = (e) => {
@@ -283,6 +332,13 @@ const handleImgError = (e) => {
       <div class="footer-actions">
         <!-- Bouton Reload sans recharger la page -->
         <button @click="loadGame" class="link-action">🔄 REFRESH</button>
+
+        <!-- Export / Import -->
+        <div class="save-actions">
+          <button @click="exportSave" class="btn-save">📥 EXPORT</button>
+          <button @click="$refs.importInput.click()" class="btn-save">📤 IMPORT</button>
+          <input type="file" ref="importInput" accept=".json" @change="importSave" style="display:none" />
+        </div>
         
         <!-- Bouton Reset BDD -->
         <button @click="resetGame" class="link-danger">⚠ RESET BDD</button>
@@ -523,6 +579,24 @@ body {
   width: 100%;
 }
 .link-action:hover { background: #2ecc71; }
+
+.save-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.btn-save {
+  flex: 1;
+  background: #2980b9;
+  border: 2px solid #000;
+  color: #fff;
+  padding: 8px;
+  font-family: inherit;
+  cursor: pointer;
+  font-size: 10px;
+}
+.btn-save:hover { background: #3498db; }
 
 .debug-info {
   color: #555;

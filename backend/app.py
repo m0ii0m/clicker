@@ -45,7 +45,7 @@ def save_state():
         return jsonify({"error": "User ID missing"}), 400
 
     data = request.json
-    r.set(key, json.dumps(data))
+    r.set(key, json.dumps(data), ex=2592000)  # Expire après 30 jours d'inactivité
     return jsonify({"status": "success", "state": data})
 
 @app.route('/api/reset', methods=['DELETE'])
