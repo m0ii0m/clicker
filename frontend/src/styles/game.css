@@ -47,7 +47,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 60px;
-  transform: rotateZ(-45deg) rotateX(-50deg);
+  transform: rotateZ(-45deg);
 }
 
 .empty-icon {
@@ -166,20 +166,36 @@ body {
   transform: translate(-20%, -70%) rotate(-45deg) rotateX(-45deg) scaleY(2) translateZ(5px);
   transform-origin: bottom center;
   image-rendering: pixelated;
-  pointer-events: auto; /* Changed so we can hover the sprite itself if needed, but ground-plate is better */
+  pointer-events: auto;
+  /* Changed so we can hover the sprite itself if needed, but ground-plate is better */
   filter: drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.5));
   animation: float 4s ease-in-out infinite;
   transition: filter 0.3s ease;
 }
 
 /* Add slight delay offsets so they don't all float in sync */
-.iso-cell:nth-child(2n) .building-sprite { animation-delay: -1s; }
-.iso-cell:nth-child(3n) .building-sprite { animation-delay: -2s; }
-.iso-cell:nth-child(5n) .building-sprite { animation-delay: -3s; }
+.iso-cell:nth-child(2n) .building-sprite {
+  animation-delay: -1s;
+}
+
+.iso-cell:nth-child(3n) .building-sprite {
+  animation-delay: -2s;
+}
+
+.iso-cell:nth-child(5n) .building-sprite {
+  animation-delay: -3s;
+}
 
 @keyframes float {
-  0%, 100% { transform: translate(-20%, -70%) rotate(-45deg) rotateX(-45deg) scaleY(2) translateZ(5px); }
-  50% { transform: translate(-20%, -74%) rotate(-45deg) rotateX(-45deg) scaleY(2) translateZ(10px); }
+
+  0%,
+  100% {
+    transform: translate(-20%, -70%) rotate(-45deg) rotateX(-45deg) scaleY(2) translateZ(5px);
+  }
+
+  50% {
+    transform: translate(-20%, -74%) rotate(-45deg) rotateX(-45deg) scaleY(2) translateZ(10px);
+  }
 }
 
 .iso-cell:hover .building-sprite {
@@ -283,10 +299,23 @@ body {
 }
 
 @keyframes heartbeat {
-  0% { transform: scale(1); }
-  10% { transform: scale(1.02); background: #ff5e4d; }
-  20% { transform: scale(1); background: #e74c3c; }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  10% {
+    transform: scale(1.02);
+    background: #ff5e4d;
+  }
+
+  20% {
+    transform: scale(1);
+    background: #e74c3c;
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* === FLOATING TEXT === */
@@ -302,8 +331,15 @@ body {
 }
 
 @keyframes floatUp {
-  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -150%) scale(1.5); }
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -150%) scale(1.5);
+  }
 }
 
 /* === UPGRADES === */
