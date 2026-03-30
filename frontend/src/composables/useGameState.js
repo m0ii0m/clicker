@@ -5,13 +5,29 @@ import { UPGRADES, getUpgradeCost } from '../config/upgrades'
 export function useGameState() {
   const { fetchState, saveState, resetState } = useApi()
 
-  // État réactif
+  // Etat réactif
   const population = ref(0)
   const growthRate = ref(0)
-  const clickPower = ref(1)
-
-  // Compteur d'achats par upgrade { zone: 2, usine: 1, ... }
   const upgradeCounts = ref({})
+
+  // Système de Combo
+  const comboMultiplier = ref(1.0)
+  const comboProgress = ref(0)
+
+  // Puissance de clic de base selon les améliorations
+  const baseClickPower = computed(() => {
+    let power = 1
+    UPGRADES.filter(u => u.type === 'click').forEach(u => {
+      const count = upgradeCounts.value[u.id] || 0
+      power += count * u.clickBonus
+    })
+    return power
+  })
+
+  // Puissance de clic totale (Base * Multiplicateur)
+  const clickPower = computed(() => {
+    return Math.floor(baseClickPower.value * comboMultiplier.value)
+  })
 
   // Rang de la ville
   const cityRank = computed(() => {
@@ -36,6 +52,18 @@ export function useGameState() {
 
   const buildHouse = () => {
     population.value += clickPower.value
+
+    // Gérer l'augmentation du combo
+    comboProgress.value += 20 // 5 clics par palier
+    if (comboProgress.value >= 100) {
+      if (comboMultiplier.value < 10.0) {
+        comboMultiplier.value += 0.5
+        comboProgress.value -= 100 // Garde le reste
+      } else {
+        comboProgress.value = 100 // Cap à max
+      }
+    }
+
     saveGame()
   }
 
@@ -48,7 +76,7 @@ export function useGameState() {
 
     if (population.value >= cost) {
       population.value -= cost
-      growthRate.value += upgrade.rateBonus
+      growthRate.value += upgrade.rateBonus || 0
       upgradeCounts.value[upgradeId] = count + 1
       saveGame()
     }
@@ -60,6 +88,8 @@ export function useGameState() {
       await resetState()
       population.value = 0
       growthRate.value = 0
+      comboMultiplier.value = 1.0
+      comboProgress.value = 0
       upgradeCounts.value = {}
     } catch (e) {
       console.error('Erreur Reset', e)
@@ -104,6 +134,26 @@ export function useGameState() {
         population.value += growthRate.value
       }
     }, 1000)
+
+    // Tick de combo (décroissance) chaque 100ms
+    setInterval(() => {
+      if (comboProgress.value > 0 || comboMultiplier.value > 1.0) {
+        // Drain constant du combo quand on ne clique pas ou peu
+        // (à 100ms, -2.5 veut dire -25 par seconde. Il faut cliquer > 1.25 fois/sec pour monter)
+        comboProgress.value -= 2.5
+
+        if (comboProgress.value <= 0) {
+          if (comboMultiplier.value > 1.0) {
+            comboMultiplier.value -= 0.5
+            // On peut descendre en cascade
+            comboProgress.value += 100
+          } else {
+            comboProgress.value = 0
+          }
+        }
+      }
+    }, 100)
+
     // Auto-save toutes les 10 secondes
     setInterval(saveGame, 10000)
   })
@@ -112,6 +162,8 @@ export function useGameState() {
     population,
     growthRate,
     clickPower,
+    comboMultiplier,
+    comboProgress,
     cityRank,
     upgradesList,
     upgradeCounts,

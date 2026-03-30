@@ -9,8 +9,24 @@
         <span class="val green">{{ Math.floor(population) }}</span>
       </div>
       <div class="stat-line">
+        <span>CLIC</span>
+        <span class="val blue">+{{ clickPower }}/clic</span>
+      </div>
+      <div class="stat-line">
         <span>FLUX</span>
         <span class="val orange">+{{ growthRate }}/s</span>
+      </div>
+    </div>
+
+    <div class="combo-section" v-if="comboMultiplier >= 1.0">
+      <div class="combo-header">
+        <span>COMBO</span>
+        <span class="combo-mult" :class="{ 'max-combo': comboMultiplier >= 10.0 }">
+          x{{ comboMultiplier.toFixed(1) }}
+        </span>
+      </div>
+      <div class="combo-bar-wrapper">
+        <div class="combo-bar-fill" :style="{ width: comboProgress + '%' }"></div>
       </div>
     </div>
 
@@ -29,9 +45,19 @@
     </div>
 
     <div class="upgrade-section">
-      <h3>URBANISME</h3>
+      <h3>AMENAGEMENT</h3>
       <UpgradeCard
-        v-for="upgrade in upgradesList"
+        v-for="upgrade in passiveUpgrades"
+        :key="upgrade.id"
+        :upgrade="upgrade"
+        @buy="$emit('buyUpgrade', $event)"
+      />
+    </div>
+
+    <div class="upgrade-section">
+      <h3>EQUIPEMENT</h3>
+      <UpgradeCard
+        v-for="upgrade in clickUpgrades"
         :key="upgrade.id"
         :upgrade="upgrade"
         @buy="$emit('buyUpgrade', $event)"
@@ -50,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import UpgradeCard from './UpgradeCard.vue'
 import FooterActions from './FooterActions.vue'
 
@@ -60,13 +86,19 @@ const props = defineProps({
   cityRank: { type: String, required: true },
   upgradesList: { type: Array, required: true },
   userId: { type: String, required: true },
-  clickPower: { type: Number, required: true }
+  clickPower: { type: Number, required: true },
+  comboMultiplier: { type: Number, required: true },
+  comboProgress: { type: Number, required: true }
 })
 
 const emit = defineEmits(['build', 'buyUpgrade', 'refresh', 'export', 'import', 'reset', 'copyId'])
 
 const floatingClicks = ref([])
 let clickIdCounter = 0
+
+// Filtrer la vue des améliorations
+const passiveUpgrades = computed(() => props.upgradesList.filter(u => u.type === 'passive'))
+const clickUpgrades = computed(() => props.upgradesList.filter(u => u.type === 'click'))
 
 const handleBuildClick = (e) => {
   emit('build')

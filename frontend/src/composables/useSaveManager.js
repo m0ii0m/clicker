@@ -68,7 +68,7 @@ export function useSaveManager(population, growthRate, upgradeCounts, saveGame) 
 
         const expectedHash = generateHash(rawJson + SECRET_SALT)
         if (expectedHash !== fileContent._signature) {
-          alert('🛑 TRICHE DÉTECTÉE ! Le fichier de sauvegarde a été falsifié.')
+          alert('🛑 TRICHE DETECTEE ! Le fichier de sauvegarde a été falsifié.')
           return
         }
 

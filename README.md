@@ -10,7 +10,7 @@ Ce projet est une application web 3-tiers (Frontend Vue.js, Backend Flask, Redis
 - Minikube
 - Kubectl
 
-### Étapes
+### Etapes
 
 1.  **Démarrer Minikube**
     ```bash

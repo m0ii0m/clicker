@@ -2,7 +2,7 @@
   <div class="upgrade-card">
     <div class="info">
       <span>{{ upgrade.emoji }} {{ upgrade.name }}</span>
-      <small>Coût: {{ upgrade.currentCost }} | Possédé: {{ upgrade.count }} | +{{ upgrade.rateBonus }}/s</small>
+      <small>Coût: {{ upgrade.currentCost }} | Possédé: {{ upgrade.count }} | +{{ upgrade.type === 'click' ? upgrade.clickBonus + '/clic' : upgrade.rateBonus + '/s' }}</small>
     </div>
     <button
       class="btn-mini"

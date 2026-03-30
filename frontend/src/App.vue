@@ -10,6 +10,7 @@ import IsoScene from './components/IsoScene.vue'
 const { userId, copyDebugId } = useApi()
 const {
   population, growthRate, cityRank, upgradesList, upgradeCounts, clickPower,
+  comboMultiplier, comboProgress,
   buildHouse, buyUpgrade, resetGame, loadGame, saveGame
 } = useGameState()
 const { zones } = useCityVisuals(upgradeCounts)
@@ -26,6 +27,8 @@ const { exportSave, importSave } = useSaveManager(population, growthRate, upgrad
       :upgradesList="upgradesList"
       :userId="userId"
       :clickPower="clickPower"
+      :comboMultiplier="comboMultiplier"
+      :comboProgress="comboProgress"
       @build="buildHouse"
       @buyUpgrade="buyUpgrade"
       @refresh="loadGame"

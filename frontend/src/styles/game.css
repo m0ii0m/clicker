@@ -19,7 +19,7 @@ body {
   align-items: center;
 }
 
-/* === SCÈNE ISOMÉTRIQUE === */
+/* === SCÈNE ISOMETRIQUE === */
 .iso-scene {
   position: absolute;
   top: 50%;
@@ -40,7 +40,7 @@ body {
   display: none;
 }
 
-/* État vide */
+/* Etat vide */
 .empty-city {
   display: flex;
   flex-direction: column;
@@ -261,8 +261,63 @@ body {
   color: #2ecc71;
 }
 
+.val.blue {
+  color: #3498db;
+}
+
 .val.orange {
   color: #e67e22;
+}
+
+/* === COMBO SYSTEM === */
+.combo-section {
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid #555;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.combo-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 10px;
+  color: #bdc3c7;
+}
+
+.combo-mult {
+  color: #f1c40f;
+  font-size: 14px;
+}
+
+.combo-mult.max-combo {
+  color: #e74c3c;
+  animation: pulse-danger 0.5s infinite alternate;
+  text-shadow: 0 0 10px #e74c3c;
+}
+
+.combo-bar-wrapper {
+  width: 100%;
+  height: 10px;
+  background: #2c3e50;
+  border: 1px solid #111;
+  overflow: hidden;
+}
+
+.combo-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f1c40f, #e67e22, #e74c3c);
+  transition: width 0.1s linear;
+}
+
+@keyframes pulse-danger {
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1.1);
+  }
 }
 
 /* === BOUTONS === */
