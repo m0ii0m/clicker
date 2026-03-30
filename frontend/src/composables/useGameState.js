@@ -1,6 +1,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useApi } from './useApi'
 import { UPGRADES, getUpgradeCost } from '../config/upgrades'
+import { COMBO_CONFIG } from '../config/gameConfig'
 
 export function useGameState() {
   const { fetchState, saveState, resetState } = useApi()
@@ -13,6 +14,11 @@ export function useGameState() {
   // Système de Combo
   const comboMultiplier = ref(1.0)
   const comboProgress = ref(0)
+
+  // Paramètres de Combo calculés (pour permettre des bonus futurés via Upgrades)
+  const maxMultiplier = computed(() => COMBO_CONFIG.MAX_MULTIPLIER)
+  const progressOnClick = computed(() => COMBO_CONFIG.PROGRESS_ON_CLICK)
+  const decayRate = computed(() => COMBO_CONFIG.DECAY_RATE)
 
   // Puissance de clic de base selon les améliorations
   const baseClickPower = computed(() => {
@@ -54,10 +60,10 @@ export function useGameState() {
     population.value += clickPower.value
 
     // Gérer l'augmentation du combo
-    comboProgress.value += 20 // 5 clics par palier
+    comboProgress.value += progressOnClick.value
     if (comboProgress.value >= 100) {
-      if (comboMultiplier.value < 10.0) {
-        comboMultiplier.value += 0.5
+      if (comboMultiplier.value < maxMultiplier.value) {
+        comboMultiplier.value += COMBO_CONFIG.INCREMENT_STEP
         comboProgress.value -= 100 // Garde le reste
       } else {
         comboProgress.value = 100 // Cap à max
@@ -135,16 +141,15 @@ export function useGameState() {
       }
     }, 1000)
 
-    // Tick de combo (décroissance) chaque 100ms
+    // Tick de combo (décroissance)
     setInterval(() => {
       if (comboProgress.value > 0 || comboMultiplier.value > 1.0) {
         // Drain constant du combo quand on ne clique pas ou peu
-        // (à 100ms, -2.5 veut dire -25 par seconde. Il faut cliquer > 1.25 fois/sec pour monter)
-        comboProgress.value -= 2.5
+        comboProgress.value -= decayRate.value
 
         if (comboProgress.value <= 0) {
           if (comboMultiplier.value > 1.0) {
-            comboMultiplier.value -= 0.5
+            comboMultiplier.value -= COMBO_CONFIG.INCREMENT_STEP
             // On peut descendre en cascade
             comboProgress.value += 100
           } else {
@@ -152,7 +157,7 @@ export function useGameState() {
           }
         }
       }
-    }, 100)
+    }, COMBO_CONFIG.DECAY_INTERVAL)
 
     // Auto-save toutes les 10 secondes
     setInterval(saveGame, 10000)

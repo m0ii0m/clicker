@@ -21,7 +21,7 @@
     <div class="combo-section" v-if="comboMultiplier >= 1.0">
       <div class="combo-header">
         <span>COMBO</span>
-        <span class="combo-mult" :class="{ 'max-combo': comboMultiplier >= 10.0 }">
+        <span class="combo-mult" :class="{ 'max-combo': comboMultiplier >= config.MAX_MULTIPLIER }">
           x{{ comboMultiplier.toFixed(1) }}
         </span>
       </div>
@@ -31,10 +31,16 @@
     </div>
 
     <div class="action-section">
-      <button @click="handleBuildClick" class="btn-main" style="position: relative; overflow: visible;">
+      <button 
+        @click="handleBuildClick" 
+        @keydown.space.prevent 
+        @keydown.enter.prevent 
+        class="btn-main" 
+        style="position: relative; overflow: visible;"
+      >
         🏠 CONSTRUIRE
-        <div 
-          v-for="click in floatingClicks" 
+        <div
+          v-for="click in floatingClicks"
           :key="click.id"
           class="floating-text"
           :style="{ left: click.x + 'px', top: click.y + 'px' }"
@@ -45,9 +51,9 @@
     </div>
 
     <div class="upgrade-section">
-      <h3>AMENAGEMENT</h3>
+      <h3>EQUIPEMENT</h3>
       <UpgradeCard
-        v-for="upgrade in passiveUpgrades"
+        v-for="upgrade in clickUpgrades"
         :key="upgrade.id"
         :upgrade="upgrade"
         @buy="$emit('buyUpgrade', $event)"
@@ -55,9 +61,9 @@
     </div>
 
     <div class="upgrade-section">
-      <h3>EQUIPEMENT</h3>
+      <h3>AMENAGEMENT</h3>
       <UpgradeCard
-        v-for="upgrade in clickUpgrades"
+        v-for="upgrade in passiveUpgrades"
         :key="upgrade.id"
         :upgrade="upgrade"
         @buy="$emit('buyUpgrade', $event)"
@@ -79,6 +85,7 @@
 import { ref, computed } from 'vue'
 import UpgradeCard from './UpgradeCard.vue'
 import FooterActions from './FooterActions.vue'
+import { COMBO_CONFIG } from '../config/gameConfig'
 
 const props = defineProps({
   population: { type: Number, required: true },
@@ -95,6 +102,8 @@ const emit = defineEmits(['build', 'buyUpgrade', 'refresh', 'export', 'import', 
 
 const floatingClicks = ref([])
 let clickIdCounter = 0
+
+const config = COMBO_CONFIG
 
 // Filtrer la vue des améliorations
 const passiveUpgrades = computed(() => props.upgradesList.filter(u => u.type === 'passive'))
