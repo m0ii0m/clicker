@@ -169,33 +169,7 @@ body {
   pointer-events: auto;
   /* Changed so we can hover the sprite itself if needed, but ground-plate is better */
   filter: drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.5));
-  animation: float 4s ease-in-out infinite;
   transition: filter 0.3s ease;
-}
-
-/* Add slight delay offsets so they don't all float in sync */
-.iso-cell:nth-child(2n) .building-sprite {
-  animation-delay: -1s;
-}
-
-.iso-cell:nth-child(3n) .building-sprite {
-  animation-delay: -2s;
-}
-
-.iso-cell:nth-child(5n) .building-sprite {
-  animation-delay: -3s;
-}
-
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translate(-20%, -70%) rotate(-45deg) rotateX(-45deg) scaleY(2) translateZ(5px);
-  }
-
-  50% {
-    transform: translate(-20%, -74%) rotate(-45deg) rotateX(-45deg) scaleY(2) translateZ(10px);
-  }
 }
 
 .iso-cell:hover .building-sprite {
@@ -374,6 +348,19 @@ body {
 }
 
 /* === FLOATING TEXT === */
+.zone-count {
+  margin-left: 5px;
+  color: #f1c40f;
+  font-weight: bold;
+}
+
+.zone-rate {
+  margin-left: 10px;
+  color: #e67e22;
+  font-weight: bold;
+  font-size: 14px;
+}
+
 .floating-text {
   position: absolute;
   color: #f1c40f;

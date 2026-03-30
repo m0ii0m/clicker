@@ -24,6 +24,7 @@ export function useCityVisuals(upgradeCounts) {
       .map(upgrade => {
         const count = newCounts[upgrade.id] || 0
         const spriteUrl = SPRITE_MAP[upgrade.id]
+        const rateTotal = count * (upgrade.rateBonus || 0)
         const cells = []
 
         for (let i = 0; i < count; i++) {
@@ -35,6 +36,7 @@ export function useCityVisuals(upgradeCounts) {
           label: upgrade.name,
           emoji: upgrade.emoji,
           count,
+          rateTotal,
           cells
         }
       })

@@ -14,6 +14,7 @@
         <span class="zone-emoji">{{ zone.emoji }}</span>
         <span class="zone-name">{{ zone.label }}</span>
         <span class="zone-count">×{{ zone.count }}</span>
+        <span v-if="zone.rateTotal > 0" class="zone-rate">(+{{ zone.rateTotal }}/s)</span>
       </div>
 
       <div class="zone-grid">
