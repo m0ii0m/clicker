@@ -1,19 +1,35 @@
 <template>
   <div class="iso-scene">
-    <div class="iso-grid">
-      <div
-        v-for="cell in grid"
-        :key="cell.id"
-        class="iso-cell"
-      >
-        <div class="ground-plate"></div>
-        <img
-          v-if="!cell.isEmpty"
-          :src="cell.spriteUrl"
-          class="building-sprite"
-          alt="batiment"
-          @error="handleImgError"
-        />
+    <div v-if="zones.length === 0" class="empty-city">
+      <span class="empty-icon">🏗️</span>
+      <span class="empty-text">Construisez votre ville !</span>
+    </div>
+
+    <div
+      v-for="zone in zones"
+      :key="zone.id"
+      class="zone-group"
+    >
+      <div class="zone-label">
+        <span class="zone-emoji">{{ zone.emoji }}</span>
+        <span class="zone-name">{{ zone.label }}</span>
+        <span class="zone-count">×{{ zone.count }}</span>
+      </div>
+
+      <div class="zone-grid">
+        <div
+          v-for="cell in zone.cells"
+          :key="cell.id"
+          class="iso-cell"
+        >
+          <div class="ground-plate"></div>
+          <img
+            :src="cell.spriteUrl"
+            class="building-sprite"
+            alt="batiment"
+            @error="handleImgError"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -21,7 +37,7 @@
 
 <script setup>
 defineProps({
-  grid: {
+  zones: {
     type: Array,
     required: true
   }

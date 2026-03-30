@@ -111,6 +111,7 @@ export function useGameState() {
   return {
     population,
     growthRate,
+    clickPower,
     cityRank,
     upgradesList,
     upgradeCounts,

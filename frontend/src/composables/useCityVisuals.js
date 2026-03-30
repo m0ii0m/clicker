@@ -1,4 +1,5 @@
 import { ref, watch } from 'vue'
+import { UPGRADES } from '../config/upgrades'
 
 const SPRITE_MAP = {
   'zone': '/assets/sprite_zone-removebg-preview.png',
@@ -8,46 +9,36 @@ const SPRITE_MAP = {
   'laboratoire': '/assets/sprite_lab-removebg-preview.png'
 }
 
-const GRID_SIZE = 100
-
-function createEmptyGrid() {
-  const grid = []
-  for (let i = 0; i < GRID_SIZE; i++) {
-    grid.push({ id: i, isEmpty: true, spriteUrl: null })
-  }
-  return grid
-}
-
 export function useCityVisuals(upgradeCounts) {
-  const grid = ref(createEmptyGrid())
+  const zones = ref([])
 
   watch(upgradeCounts, (newCounts) => {
     if (!newCounts || Object.keys(newCounts).length === 0) {
-      grid.value = createEmptyGrid()
+      zones.value = []
       return
     }
 
-    // Parcourir chaque type de bâtiment acheté
-    for (const [upgradeId, count] of Object.entries(newCounts)) {
-      const spriteUrl = SPRITE_MAP[upgradeId]
-      if (!spriteUrl) continue
+    // Générer les zones à partir des upgrades qui ont un sprite et un count > 0
+    zones.value = UPGRADES
+      .filter(upgrade => SPRITE_MAP[upgrade.id] && (newCounts[upgrade.id] || 0) > 0)
+      .map(upgrade => {
+        const count = newCounts[upgrade.id] || 0
+        const spriteUrl = SPRITE_MAP[upgrade.id]
+        const cells = []
 
-      const currentOfThisType = grid.value.filter(c => c.spriteUrl === spriteUrl).length
-
-      // S'il en manque sur la grille, on les ajoute dans des cellules vides aléatoires
-      if (count > currentOfThisType) {
-        const toAdd = count - currentOfThisType
-        for (let k = 0; k < toAdd; k++) {
-          const emptyCells = grid.value.filter(c => c.isEmpty)
-          if (emptyCells.length > 0) {
-            const cell = emptyCells[Math.floor(Math.random() * emptyCells.length)]
-            cell.isEmpty = false
-            cell.spriteUrl = spriteUrl
-          }
+        for (let i = 0; i < count; i++) {
+          cells.push({ id: `${upgrade.id}-${i}`, spriteUrl })
         }
-      }
-    }
+
+        return {
+          id: upgrade.id,
+          label: upgrade.name,
+          emoji: upgrade.emoji,
+          count,
+          cells
+        }
+      })
   }, { deep: true, immediate: true })
 
-  return { grid }
+  return { zones }
 }

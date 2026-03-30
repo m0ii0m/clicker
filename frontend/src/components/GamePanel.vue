@@ -15,8 +15,16 @@
     </div>
 
     <div class="action-section">
-      <button @click="$emit('build')" class="btn-main">
+      <button @click="handleBuildClick" class="btn-main" style="position: relative; overflow: visible;">
         🏠 CONSTRUIRE
+        <div 
+          v-for="click in floatingClicks" 
+          :key="click.id"
+          class="floating-text"
+          :style="{ left: click.x + 'px', top: click.y + 'px' }"
+        >
+          +{{ clickPower }}
+        </div>
       </button>
     </div>
 
@@ -42,16 +50,38 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import UpgradeCard from './UpgradeCard.vue'
 import FooterActions from './FooterActions.vue'
 
-defineProps({
+const props = defineProps({
   population: { type: Number, required: true },
   growthRate: { type: Number, required: true },
   cityRank: { type: String, required: true },
   upgradesList: { type: Array, required: true },
-  userId: { type: String, required: true }
+  userId: { type: String, required: true },
+  clickPower: { type: Number, required: true }
 })
 
-defineEmits(['build', 'buyUpgrade', 'refresh', 'export', 'import', 'reset', 'copyId'])
+const emit = defineEmits(['build', 'buyUpgrade', 'refresh', 'export', 'import', 'reset', 'copyId'])
+
+const floatingClicks = ref([])
+let clickIdCounter = 0
+
+const handleBuildClick = (e) => {
+  emit('build')
+  
+  // Calculate relative position based on click target bounding rect
+  const rect = e.currentTarget.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  
+  const id = clickIdCounter++
+  floatingClicks.value.push({ id, x, y })
+  
+  // Remove after 1 second (matches animation duration)
+  setTimeout(() => {
+    floatingClicks.value = floatingClicks.value.filter(c => c.id !== id)
+  }, 1000)
+}
 </script>
