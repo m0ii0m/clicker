@@ -1,3 +1,4 @@
+import time
 from flask import Blueprint, jsonify, request
 from config import DEFAULT_STATE
 from services.redis_service import redis_service
@@ -18,6 +19,13 @@ def get_state():
         return jsonify({"error": "User ID missing"}), 400
 
     state = redis_service.get_game(user_id)
+
+    # Temps écoulé depuis la dernière sauvegarde, calculé avec l'horloge du serveur
+    # pour que le client puisse appliquer la production hors ligne
+    last_saved = state.pop('last_saved', None)
+    if last_saved is not None:
+        state['offline_seconds'] = max(0, time.time() - last_saved)
+
     return jsonify(state)
 
 
@@ -27,7 +35,10 @@ def save_state():
     if not user_id:
         return jsonify({"error": "User ID missing"}), 400
 
-    data = request.json
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Invalid game state"}), 400
+
     redis_service.save_game(user_id, data)
     return jsonify({"status": "success", "state": data})
 

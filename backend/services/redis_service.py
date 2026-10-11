@@ -1,4 +1,5 @@
 import json
+import time
 import redis
 from config import REDIS_HOST, REDIS_PORT, TTL_SECONDS, DEFAULT_STATE
 
@@ -23,9 +24,10 @@ class RedisService:
         return DEFAULT_STATE.copy()
 
     def save_game(self, user_id, state):
-        """Sauvegarde l'état du jeu avec un TTL de 30 jours."""
+        """Sauvegarde l'état du jeu avec un TTL de 30 jours, horodaté par le serveur."""
         key = self._get_key(user_id)
-        self.client.set(key, json.dumps(state), ex=TTL_SECONDS)
+        payload = {**state, "last_saved": time.time()}
+        self.client.set(key, json.dumps(payload), ex=TTL_SECONDS)
 
     def delete_game(self, user_id):
         """Supprime la sauvegarde d'un utilisateur."""

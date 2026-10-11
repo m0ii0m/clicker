@@ -51,3 +51,19 @@ def test_reset(client):
     assert rv.status_code == 200
     json_data = rv.get_json()
     assert json_data["trombones"] == 0
+
+
+def test_offline_seconds(client):
+    """Vérifie que le serveur renvoie le temps écoulé depuis la dernière sauvegarde"""
+    client.post('/api/save', json={"trombones": 10}, headers={'X-User-ID': 'test_offline'})
+
+    rv = client.get('/api/state', headers={'X-User-ID': 'test_offline'})
+    json_data = rv.get_json()
+    assert 0 <= json_data["offline_seconds"] < 5
+    assert "last_saved" not in json_data
+
+
+def test_save_invalid_body(client):
+    """Vérifie qu'un état qui n'est pas un objet JSON est refusé"""
+    rv = client.post('/api/save', json=[1, 2, 3], headers={'X-User-ID': 'test_invalid'})
+    assert rv.status_code == 400

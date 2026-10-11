@@ -1,8 +1,8 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useApi } from './useApi'
 import { UPGRADES, getUpgradeCost } from '../config/upgrades'
 import { BONUSES } from '../config/bonuses'
-import { COMBO_CONFIG } from '../config/gameConfig'
+import { COMBO_CONFIG, SAVE_CONFIG, OFFLINE_CONFIG } from '../config/gameConfig'
 
 export function useGameState() {
   const { fetchState, saveState, resetState } = useApi()
@@ -15,8 +15,15 @@ export function useGameState() {
   // Tant que l'état serveur n'est pas chargé, on ne sauvegarde pas
   // (sinon un état vide pourrait écraser la sauvegarde existante)
   const isLoaded = ref(false)
-  const LOAD_RETRY_DELAY = 5000
   let loadRetryTimer = null
+
+  // Gains accumulés pendant l'absence du joueur ({ seconds, amount } ou null)
+  const offlineGain = ref(null)
+
+  // File des sauvegardes : chaque requête part après la précédente,
+  // ce qui empêche un état ancien d'écraser un état plus récent
+  let saveQueue = Promise.resolve()
+  let clickSaveTimer = null
 
   // Système de Combo
   const comboMultiplier = ref(1.0)
@@ -112,7 +119,7 @@ export function useGameState() {
       }
     }
 
-    saveGame()
+    scheduleSave()
   }
 
   const buyUpgrade = (upgradeId) => {
@@ -143,7 +150,12 @@ export function useGameState() {
   const resetGame = async () => {
     if (!confirm('ATTENTION : Cela va effacer définitivement votre ville. Continuer ?')) return
     try {
-      await resetState()
+      // Le reset passe aussi par la file pour qu'une sauvegarde en cours
+      // ne recrée pas l'ancienne partie juste après
+      clearTimeout(clickSaveTimer)
+      const reset = saveQueue.then(resetState)
+      saveQueue = reset.catch(() => {})
+      await reset
       population.value = 0
       comboMultiplier.value = 1.0
       comboProgress.value = 0
@@ -156,17 +168,40 @@ export function useGameState() {
 
   // --- Persistence ---
 
-  const saveGame = async () => {
+  // L'état est lu au moment de l'envoi, donc toujours le plus récent
+  const buildSnapshot = () => ({
+    trombones: population.value,
+    upgrades: upgradeCounts.value,
+    bonuses: acquiredBonuses.value
+  })
+
+  const saveGame = () => {
+    if (!isLoaded.value) return saveQueue
+    clearTimeout(clickSaveTimer)
+    saveQueue = saveQueue.then(async () => {
+      try {
+        await saveState(buildSnapshot())
+      } catch (e) {
+        console.error('Erreur Save', e)
+      }
+    })
+    return saveQueue
+  }
+
+  // Les clics sont fréquents : on sauvegarde un peu après le dernier
+  const scheduleSave = () => {
     if (!isLoaded.value) return
-    try {
-      await saveState({
-        trombones: population.value,
-        upgrades: upgradeCounts.value,
-        bonuses: acquiredBonuses.value
-      })
-    } catch (e) {
-      console.error('Erreur Save', e)
-    }
+    clearTimeout(clickSaveTimer)
+    clickSaveTimer = setTimeout(saveGame, SAVE_CONFIG.CLICK_SAVE_DELAY)
+  }
+
+  // Envoi direct (hors file) quand la page est masquée ou fermée :
+  // elle peut disparaître avant la fin d'une sauvegarde en cours
+  const flushSave = () => {
+    if (!isLoaded.value) return
+    clearTimeout(clickSaveTimer)
+    saveState(buildSnapshot(), { keepalive: true })
+      .catch(e => console.error('Erreur Save', e))
   }
 
   const loadGame = async () => {
@@ -176,6 +211,7 @@ export function useGameState() {
         population.value = data.trombones || 0
         upgradeCounts.value = data.upgrades || {}
         acquiredBonuses.value = data.bonuses || []
+        applyOfflineGain(data.offline_seconds || 0)
       }
       isLoaded.value = true
       console.log('Jeu rechargé depuis le serveur !')
@@ -184,19 +220,41 @@ export function useGameState() {
       // Premier chargement raté : on réessaie plus tard
       if (!isLoaded.value) {
         clearTimeout(loadRetryTimer)
-        loadRetryTimer = setTimeout(loadGame, LOAD_RETRY_DELAY)
+        loadRetryTimer = setTimeout(loadGame, SAVE_CONFIG.LOAD_RETRY_DELAY)
       }
     }
+  }
+
+  // Production pendant l'absence, calculée depuis la dernière sauvegarde serveur
+  const applyOfflineGain = (offlineSeconds) => {
+    const seconds = Math.min(offlineSeconds, OFFLINE_CONFIG.MAX_SECONDS)
+    const amount = growthRate.value * seconds * OFFLINE_CONFIG.EFFICIENCY
+    if (amount <= 0) return
+
+    population.value += amount
+    if (seconds >= OFFLINE_CONFIG.NOTIFY_MIN_SECONDS) {
+      offlineGain.value = { seconds, amount: Math.floor(amount) }
+    }
+  }
+
+  const onVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') flushSave()
   }
 
   // --- Lifecycle ---
 
   onMounted(() => {
     loadGame()
-    // Tick de production chaque seconde
+
+    // Tick de production basé sur le temps réel écoulé : les navigateurs
+    // ralentissent les timers des onglets en arrière-plan
+    let lastTick = Date.now()
     setInterval(() => {
+      const now = Date.now()
+      const elapsed = Math.min((now - lastTick) / 1000, OFFLINE_CONFIG.MAX_SECONDS)
+      lastTick = now
       if (growthRate.value > 0) {
-        population.value += growthRate.value
+        population.value += growthRate.value * elapsed
       }
     }, 1000)
 
@@ -218,8 +276,15 @@ export function useGameState() {
       }
     }, COMBO_CONFIG.DECAY_INTERVAL)
 
-    // Auto-save toutes les 10 secondes
-    setInterval(saveGame, 10000)
+    // Auto-save périodique
+    setInterval(saveGame, SAVE_CONFIG.AUTOSAVE_INTERVAL)
+
+    // Sauvegarde quand l'onglet est masqué (changement d'onglet, fermeture, mobile en veille)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+  })
+
+  onUnmounted(() => {
+    document.removeEventListener('visibilitychange', onVisibilityChange)
   })
 
   return {
@@ -233,6 +298,7 @@ export function useGameState() {
     upgradesList,
     upgradeCounts,
     acquiredBonuses,
+    offlineGain,
     buildHouse,
     buyUpgrade,
     buyBonus,

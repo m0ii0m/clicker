@@ -1,6 +1,7 @@
 import { ref, watch } from 'vue'
 import { UPGRADES } from '../config/upgrades'
 import { BONUSES } from '../config/bonuses'
+import { VISUAL_CONFIG } from '../config/gameConfig'
 
 const SPRITE_MAP = {
   'zone': '/assets/sprite_zone-removebg-preview.png',
@@ -37,7 +38,10 @@ export function useCityVisuals(upgradeCounts, acquiredBonuses) {
         const rateTotal = count * (upgrade.rateBonus || 0) * mult
         const cells = []
 
-        for (let i = 0; i < count; i++) {
+        // Au-delà d'un certain nombre, on n'affiche plus de sprites supplémentaires
+        // (le total reste visible dans le label de la zone)
+        const visibleCount = Math.min(count, VISUAL_CONFIG.MAX_SPRITES_PER_ZONE)
+        for (let i = 0; i < visibleCount; i++) {
           cells.push({ id: `${upgrade.id}-${i}`, spriteUrl })
         }
 

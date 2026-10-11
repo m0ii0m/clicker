@@ -27,12 +27,15 @@ export function useApi() {
     return response.json()
   }
 
-  const saveState = async (state) => {
-    await fetch(`${API_BASE}/save`, {
+  // keepalive : permet à la requête d'aboutir même si la page se ferme
+  const saveState = async (state, { keepalive = false } = {}) => {
+    const response = await fetch(`${API_BASE}/save`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(state)
+      body: JSON.stringify(state),
+      keepalive
     })
+    if (!response.ok) throw new Error('Erreur API')
   }
 
   const resetState = async () => {
