@@ -12,6 +12,12 @@ export function useGameState() {
   const upgradeCounts = ref({})
   const acquiredBonuses = ref([])
 
+  // Tant que l'état serveur n'est pas chargé, on ne sauvegarde pas
+  // (sinon un état vide pourrait écraser la sauvegarde existante)
+  const isLoaded = ref(false)
+  const LOAD_RETRY_DELAY = 5000
+  let loadRetryTimer = null
+
   // Système de Combo
   const comboMultiplier = ref(1.0)
   const comboProgress = ref(0)
@@ -151,6 +157,7 @@ export function useGameState() {
   // --- Persistence ---
 
   const saveGame = async () => {
+    if (!isLoaded.value) return
     try {
       await saveState({
         trombones: population.value,
@@ -170,9 +177,15 @@ export function useGameState() {
         upgradeCounts.value = data.upgrades || {}
         acquiredBonuses.value = data.bonuses || []
       }
+      isLoaded.value = true
       console.log('Jeu rechargé depuis le serveur !')
     } catch (e) {
       console.error('Erreur Load', e)
+      // Premier chargement raté : on réessaie plus tard
+      if (!isLoaded.value) {
+        clearTimeout(loadRetryTimer)
+        loadRetryTimer = setTimeout(loadGame, LOAD_RETRY_DELAY)
+      }
     }
   }
 

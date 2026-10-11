@@ -1,4 +1,4 @@
-export function useSaveManager(population, growthRate, upgradeCounts, saveGame) {
+export function useSaveManager(population, upgradeCounts, acquiredBonuses, saveGame) {
   const SECRET_SALT = import.meta.env.VITE_SECRET_SALT || "sel_par_defaut"
 
   const generateHash = (str) => {
@@ -14,8 +14,8 @@ export function useSaveManager(population, growthRate, upgradeCounts, saveGame) 
   const exportSave = () => {
     const saveData = {
       trombones: population.value,
-      production_rate: growthRate.value,
       upgrades: upgradeCounts.value,
+      bonuses: acquiredBonuses.value,
       exportDate: new Date().toISOString()
     }
     const rawJson = JSON.stringify(saveData)
@@ -73,12 +73,12 @@ export function useSaveManager(population, growthRate, upgradeCounts, saveGame) 
         }
 
         const data = JSON.parse(rawJson)
-        if (data.trombones === undefined || data.production_rate === undefined) {
+        if (data.trombones === undefined) {
           alert('Fichier de sauvegarde invalide.')
           return
         }
         population.value = data.trombones
-        growthRate.value = data.production_rate
+        // Le taux de production est recalculé à partir des upgrades et des bonus
 
         // Restaurer les upgrades si présents
         if (data.upgrades) {
@@ -86,6 +86,9 @@ export function useSaveManager(population, growthRate, upgradeCounts, saveGame) 
           for (let key in upgradeCounts.value) delete upgradeCounts.value[key]
           Object.assign(upgradeCounts.value, data.upgrades)
         }
+
+        // Les anciennes sauvegardes n'ont pas de bonus : on repart sans talents
+        acquiredBonuses.value = Array.isArray(data.bonuses) ? [...data.bonuses] : []
         await saveGame()
         alert('Sauvegarde importée avec succès !')
       } catch (err) {
